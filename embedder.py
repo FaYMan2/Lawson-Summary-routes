@@ -8,14 +8,24 @@ import math
 from concurrent.futures import as_completed
 import asyncio
 from time import time
-
+from vectore_store import addVector
+from langchain_together.embeddings import TogetherEmbeddings
 load_dotenv()
-modelCount = int(os.getenv('KEY_COUNT'))
-
 
 def createEmbeddigs(model : any, docs : list[any]):
     vectors = model.embed_documents([doc.page_content for doc in docs])
-    return vectors
+    vectors_map = []
+    for i,vec in enumerate(vectors):
+        vectors_map.append({"values" : vec,
+                            "id" : f'vec{i}',
+                            "metadata" : {
+                                "text" : docs[i].page_content
+                            }
+                        })
+        
+    return vectors_map
+
+    
 
 async def getDoc(URL : str):
     loader = PyMuPDFLoader(URL)
@@ -27,11 +37,13 @@ async def getDoc(URL : str):
 
 
 def getModels() -> list[any]:
+    modelCount = int(os.getenv('TOGETHER_KEY_COUNT'))
     keys = []
+    print(f'key count : {modelCount}')
     for i in range(1,modelCount+1):
-        keys.append(os.getenv(f'JINA_KEY_{i}'))
+        keys.append(os.getenv(f'TOGETHER_KEY_{i}'))
         
-    models = [JinaEmbeddings(jina_api_key=key, model_name='jina-embeddings-v2-base-en') for key in keys]
+    models = [TogetherEmbeddings(model="togethercomputer/m2-bert-80M-8k-retrieval",api_key=key) for key in keys]
     return models
 
 def slice_list(input_list, n):
@@ -49,23 +61,29 @@ async def Embedder(URL : str, chunkSize : int, overlap : int):
             return 0
         
         spliiter = RecursiveCharacterTextSplitter(
-        chunk_size = chunkSize,
-        chunk_overlap = overlap
+            chunk_size = chunkSize,
+            chunk_overlap = overlap
         )
     
         docs = spliiter.create_documents([doc])
         print(f'length docs: {len(docs)}, docs sample: {docs[0].page_content[:100]}')
         models = getModels()
         vector_pool = []
-        
+        modelCount = int(os.getenv('TOGETHER_KEY_COUNT'))
         with ThreadPoolExecutor(max_workers=modelCount) as executor:
             doc_distributions = slice_list(docs,modelCount)
             future_map = {executor.submit(createEmbeddigs,models[i-1],doc_distributions[i-1]) : i for i in range(1,modelCount+1)}
             for future in as_completed(future_map):
                 vector_pool.append(future.result())
         
+#        to_key = os.getenv('TOGETHER_KEY_1')
+#        await addVectors(namespace="example-namespace",
+#                         vectors=docs,
+#                         embeddings=TogetherEmbeddings(model="togethercomputer/m2-bert-80M-8k-retrieval",api_key=to_key))
+        await addVector(vector=vector_pool,namespace="example-namespaces")
         end = time()
-        print(f'length : {len(vector_pool)} shape : {len(vector_pool),len(vector_pool[0]),len(vector_pool[0][0])} total time taken : {end - start}')
+        print(f'vectors : {len(vector_pool)} \n shape : {(len(vector_pool),len(vector_pool[0]))} \n sample : {vector_pool[0][0]}\ntotal time taken : {end - start}')
+#        print(f'time  :{end - start}')
         return 1    
     
     except Exception as e:
