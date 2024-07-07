@@ -12,12 +12,12 @@ from vectore_store import addVector
 from langchain_together.embeddings import TogetherEmbeddings
 load_dotenv()
 
-def createEmbeddigs(model : any, docs : list[any]):
+def createEmbeddigs(model : any, docs : list[any],batch : int):
     vectors = model.embed_documents([doc.page_content for doc in docs])
     vectors_map = []
     for i,vec in enumerate(vectors):
         vectors_map.append({"values" : vec,
-                            "id" : f'vec{i}',
+                            "id" : f'batch{batch}vector{i+1}',
                             "metadata" : {
                                 "text" : docs[i].page_content
                             }
@@ -25,7 +25,6 @@ def createEmbeddigs(model : any, docs : list[any]):
         
     return vectors_map
 
-    
 
 async def getDoc(URL : str):
     loader = PyMuPDFLoader(URL)
@@ -34,7 +33,6 @@ async def getDoc(URL : str):
     for datum in data:
         doc += datum.page_content
     return doc
-
 
 def getModels() -> list[any]:
     modelCount = int(os.getenv('TOGETHER_KEY_COUNT'))
@@ -72,9 +70,13 @@ async def Embedder(URL : str, chunkSize : int, overlap : int):
         modelCount = int(os.getenv('TOGETHER_KEY_COUNT'))
         with ThreadPoolExecutor(max_workers=modelCount) as executor:
             doc_distributions = slice_list(docs,modelCount)
-            future_map = {executor.submit(createEmbeddigs,models[i-1],doc_distributions[i-1]) : i for i in range(1,modelCount+1)}
+            future_map = {executor.submit(createEmbeddigs,models[i-1],doc_distributions[i-1],i+1) : i for i in range(1,modelCount+1)}
             for future in as_completed(future_map):
-                vector_pool.append(future.result())
+                result = future.result()
+                if result:
+                    vector_pool.append(result)  
+                else:
+                     print(f"Future {future_map[future]} resulted in None")
         
 #        to_key = os.getenv('TOGETHER_KEY_1')
 #        await addVectors(namespace="example-namespace",
@@ -83,7 +85,7 @@ async def Embedder(URL : str, chunkSize : int, overlap : int):
         await addVector(vector=vector_pool,namespace="example-namespaces")
         end = time()
         print(f'vectors : {len(vector_pool)} \n shape : {(len(vector_pool),len(vector_pool[0]))} \n sample : {vector_pool[0][0]}\ntotal time taken : {end - start}')
-#        print(f'time  :{end - start}')
+
         return 1    
     
     except Exception as e:
