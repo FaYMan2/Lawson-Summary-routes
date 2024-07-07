@@ -31,17 +31,3 @@ async def embedd():
     return {
         "message" : "not done"
     }
-
-@app.get("/fuck")
-async def fml():
-    print('ROUTE CALLED')
-    res = await Embedder(URL='https://utfs.io/f/4741fdfc-abf3-468b-88bc-310ff8d32ba2-vykhb1.PDF',
-                         chunkSize=10000,
-                         overlap=500)
-    if res == 1:
-        return {
-            "message" : "done"
-        }
-    return {
-        "message" : "not done"
-    }

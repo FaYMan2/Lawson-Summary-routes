@@ -44,7 +44,9 @@ async def get_Vectors(namespace : str) -> dict[list[list[int]], tuple]:
         "vectors" : vectors,
         "shape" : shape
     }
-    
+
+
+## SLOW FUNCTION - ONLY TO BE USED WHEN addVector() breaks
 async def addVectorsPinecone(namespace : str,vectors : list[any],embeddings):
     pc = Pinecone(api_key=pinecone_api_key)
     index = pc.Index(pinecone_index)
