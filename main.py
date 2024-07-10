@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,HTTPException
 import json
 from vectore_store import get_Vectors
 from embedder import Embedder
@@ -20,9 +20,7 @@ async def root(docId : str,api_key : str):
         print(vectors)
         return {"message": json.dumps(vectors)}
     else:
-        return {
-            "message" : "Unortharized access - invalid api key"
-        }
+        raise HTTPException(status_code=401,detail="Unortharized access - invalid api key")
 
 
 @app.post("/emmbed")
@@ -39,10 +37,9 @@ async def embedd(url : str,docId : str,api_key : str):
                 "time" : res['time'],
                 "namespace" : res['namespace']
              }
-        return {
-            "message" : "failed"
-        }
+        
+        raise HTTPException(status_code=500,detail="OOPS : SOMETHING WENT WRONG")
+        
     else :
-        return {
-            "message" : "Unortharized access - invalid api key"
-        }
+        raise HTTPException(status_code=401,detail="Unortharized access - invalid api key")
+        
