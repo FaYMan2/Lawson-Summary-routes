@@ -2,7 +2,6 @@ from pinecone import Pinecone
 from dotenv import load_dotenv
 from langchain_pinecone import PineconeVectorStore
 import os
-from langchain_community.embeddings import JinaEmbeddings
 from time import time
 
 load_dotenv()
@@ -86,6 +85,6 @@ async def addVector(namespace : str, vector):
     else:
         print('namespace already exists')
         return -1
-    return 1
+    return res
         
     

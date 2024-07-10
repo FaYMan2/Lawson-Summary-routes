@@ -2,32 +2,47 @@ from fastapi import FastAPI
 import json
 from vectore_store import get_Vectors
 from embedder import Embedder
+from dotenv import load_dotenv
+import os
+load_dotenv()
+process_key = os.getenv('API_KEY')
 app = FastAPI()
-
-
 @app.get("/")
 async def ping():
     return{
         "message" : "server active"
     }
 
-@app.get("/vectors")
-async def root():
-    vectors = await get_Vectors(namespace='clxd6ui070004acwb4gvwd92c')
-    print(vectors)
-    return {"message": json.dumps(vectors)}
-
-
-@app.get("/emmbed")
-async def embedd():
-    print('ROUTE CALLED')
-    res = await Embedder(URL='https://utfs.io/f/4741fdfc-abf3-468b-88bc-310ff8d32ba2-vykhb1.PDF',
-                         chunkSize=10000,
-                         overlap=500)
-    if res == 1:
+@app.get("/vectors/{docId}")
+async def root(docId : str,api_key : str):
+    if process_key == api_key:
+        vectors = await get_Vectors(namespace=docId)
+        print(vectors)
+        return {"message": json.dumps(vectors)}
+    else:
         return {
-            "message" : "done"
+            "message" : "Unortharized access - invalid api key"
         }
-    return {
-        "message" : "not done"
-    }
+
+
+@app.post("/emmbed")
+async def embedd(url : str,docId : str,api_key : str):
+    print('ROUTE CALLED')
+    if process_key == api_key:
+        res = await Embedder(URL=url,
+                             chunkSize=10000,
+                             overlap=500,
+                             namespace=docId)
+        if res:
+            return {
+                "vector_count" : res['vector_count'],
+                "time" : res['time'],
+                "namespace" : res['namespace']
+             }
+        return {
+            "message" : "failed"
+        }
+    else :
+        return {
+            "message" : "Unortharized access - invalid api key"
+        }

@@ -1,4 +1,3 @@
-from langchain_community.embeddings import JinaEmbeddings
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from dotenv import load_dotenv
@@ -6,7 +5,6 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 import math
 from concurrent.futures import as_completed
-import asyncio
 from time import time
 from vectore_store import addVector
 from langchain_together.embeddings import TogetherEmbeddings
@@ -26,7 +24,7 @@ def createEmbeddigs(model : any, docs : list[any],batch : int):
     return vectors_map
 
 
-async def getDoc(URL : str):
+async def getDoc(URL : str) -> str:
     loader = PyMuPDFLoader(URL)
     data = loader.load()
     doc = ''
@@ -49,7 +47,7 @@ def slice_list(input_list, n):
     part_size = math.ceil(length / n)
     return [input_list[i * part_size: (i + 1) * part_size] for i in range(n)]
     
-async def Embedder(URL : str, chunkSize : int, overlap : int):
+async def Embedder(URL : str, chunkSize : int, overlap : int, namespace : str):
     start = time()
     try:
         print('embedder called')
@@ -82,22 +80,17 @@ async def Embedder(URL : str, chunkSize : int, overlap : int):
 #        await addVectors(namespace="example-namespace",
 #                         vectors=docs,
 #                         embeddings=TogetherEmbeddings(model="togethercomputer/m2-bert-80M-8k-retrieval",api_key=to_key))
-        await addVector(vector=vector_pool,namespace="example-namespaces")
+        pineconeRes = await addVector(vector=vector_pool,namespace=namespace)
         end = time()
-        print(f'vectors : {len(vector_pool)} \n shape : {(len(vector_pool),len(vector_pool[0]))} \n sample : {vector_pool[0][0]}\ntotal time taken : {end - start}')
+       # print(f'vectors : {len(vector_pool)} \n shape : {(len(vector_pool),len(vector_pool[0]))} \n sample : {vector_pool[0][0]}\ntotal time taken : {end - start}')
 
-        return 1    
+        return {
+            "vector_count" : pineconeRes['upserted_count'],
+            "time" : end - start,
+            "namespace" : namespace
+        }
     
     except Exception as e:
         print(f"Error in Embedder: {e}")
         return 0
 
-
-async def main():
-    res = await Embedder(URL='https://utfs.io/f/4741fdfc-abf3-468b-88bc-310ff8d32ba2-vykhb1.PDF',
-                         chunkSize=10000,
-                         overlap=500)
-
-
-
-asyncio.run(main())
