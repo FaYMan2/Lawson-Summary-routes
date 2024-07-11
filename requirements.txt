@@ -6,3 +6,4 @@ langchain-together
 langchain-pinecone
 uvicorn
 langchain-community
+pycryptodome

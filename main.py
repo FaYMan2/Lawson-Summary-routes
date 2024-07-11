@@ -5,6 +5,9 @@ from embedder import Embedder
 from dotenv import load_dotenv
 import os
 from fastapi.middleware.cors import CORSMiddleware
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.PublicKey import RSA
+
 load_dotenv()
 process_key = os.getenv('API_KEY')
 app = FastAPI()
@@ -19,13 +22,31 @@ app.add_middleware(
     allow_headers = ["*"]
 )
 
+def auth(api_key: str) -> bool:
+    try:
+        pk = str(os.getenv('PRIVATE_KEY'))
+        if pk is None:
+            raise ValueError("Private key not found in environment variables")
+        env_key = pk.replace('\n'," ")
+        private_key = RSA.import_key(env_key)
+        bytes_key = bytes.fromhex(api_key)
+        cipher_rsa_d = PKCS1_OAEP.new(private_key)
+        d_data = cipher_rsa_d.decrypt(bytes_key)
+        input_key = d_data.decode('utf-8')
+        return process_key == input_key
+    except ValueError as ve:
+        print("Value error occurred:", ve)
+    except Exception as e:
+        print("An error occurred during decryption:", e)
+    return False
+
 
 @app.get("/")
 async def ping():
     return{
         "message" : "server active"
     }
-
+    
 @app.get("/vectors/{docId}")
 async def root(docId : str,api_key : str):
     if process_key == api_key:
