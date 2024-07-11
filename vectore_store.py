@@ -33,11 +33,12 @@ async def get_Vectors(namespace : str) -> dict[list[list[int]], tuple]:
         top_k=vector_count,
         namespace=namespace,
         vector=[0 for _ in range(dimension)],
-        include_values=True
+        include_values=True,
+        include_metadata=True
     )
 
-    vectors = [vec['values'] for vec in query_res['matches']]
-    print(f'vector array length : {len(vectors)} shape = {len(vectors) , len(vectors[0])}')
+    vectors = [{"vector" : vec['values'], "text" : vec['metadata'].get('text'," ")}for vec in query_res['matches']]
+    print(f'vector array length : {len(vectors)} shape = {len(vectors)}')
     shape = (len(vectors), len(vectors[0]))
     return {
         "vectors" : vectors,

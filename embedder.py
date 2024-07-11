@@ -82,7 +82,7 @@ async def Embedder(URL : str, chunkSize : int, overlap : int, namespace : str):
 #                         embeddings=TogetherEmbeddings(model="togethercomputer/m2-bert-80M-8k-retrieval",api_key=to_key))
         pineconeRes = await addVector(vector=vector_pool,namespace=namespace)
         end = time()
-       # print(f'vectors : {len(vector_pool)} \n shape : {(len(vector_pool),len(vector_pool[0]))} \n sample : {vector_pool[0][0]}\ntotal time taken : {end - start}')
+        # print(f'vectors : {len(vector_pool)} \n shape : {(len(vector_pool),len(vector_pool[0]))} \n sample : {vector_pool[0][0]}\ntotal time taken : {end - start}')
 
         return {
             "vector_count" : pineconeRes['upserted_count'],
