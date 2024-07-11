@@ -10,6 +10,7 @@ pinecone_index = os.getenv('PINECONE_INDEX_NAME')
 jina_key = os.getenv('JINA_KEY_5')
 
 
+
 def printPineconeStats(namespace : str):
     pc = Pinecone(api_key=pinecone_api_key)
     index = pc.Index(pinecone_index)
@@ -34,8 +35,7 @@ async def get_Vectors(namespace : str) -> dict[list[list[int]], tuple]:
         vector=[0 for _ in range(dimension)],
         include_values=True
     )
-    print(f'length of result : {len(query_res['matches'])} dimension : {len(query_res['matches'][0].get('values',[]))}')
-    
+
     vectors = [vec['values'] for vec in query_res['matches']]
     print(f'vector array length : {len(vectors)} shape = {len(vectors) , len(vectors[0])}')
     shape = (len(vectors), len(vectors[0]))

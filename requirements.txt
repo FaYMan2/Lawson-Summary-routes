@@ -5,3 +5,4 @@ fastapi
 langchain-together
 langchain-pinecone
 uvicorn
+langchain-community

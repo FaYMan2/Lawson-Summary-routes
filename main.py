@@ -4,9 +4,22 @@ from vectore_store import get_Vectors
 from embedder import Embedder
 from dotenv import load_dotenv
 import os
+from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 process_key = os.getenv('API_KEY')
 app = FastAPI()
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins = origins,
+    allow_credentials = True,
+    allow_methods = ["*"],
+    allow_headers = ["*"]
+)
+
+
 @app.get("/")
 async def ping():
     return{
