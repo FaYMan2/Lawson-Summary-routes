@@ -52,7 +52,7 @@ async def root(docId : str,api_key : str):
     if process_key == api_key:
         vectors = await get_Vectors(namespace=docId)
         print(vectors)
-        return {"message": json.dumps(vectors)}
+        return {"message": vectors}
     else:
         raise HTTPException(status_code=401,detail="Unortharized access - invalid api key")
 
